@@ -51,8 +51,8 @@ if st.sidebar.button("Run Diagnostics"):
     }])
 
     # 1. Feature Engineering
-    raw_input['PowerIndex'] = raw_input['Torque [Nm]'] * raw_input['Rotational speed [rpm]']
-    raw_input['TempDiff'] = raw_input['Process temperature [K]'] - raw_input['Air temperature [K]']
+    raw_input['Power_Index'] = raw_input['Torque [Nm]'] * raw_input['Rotational speed [rpm]']
+    raw_input['Temp_difference'] = raw_input['Process temperature [K]'] - raw_input['Air temperature [K]']
 
     # 2. FORCE COLUMN ORDER (Match this exactly to your training data columns)
     # If your training data had 'Type' at the end or different names, change this list!
@@ -94,7 +94,7 @@ if st.sidebar.button("Run Diagnostics"):
         else:
             st.error(f"🚨 STATUS: {prediction} DETECTED (Confidence: {confidence:.2f}%)")
 
-        st.info(f"Calculated PowerIndex: {raw_input['PowerIndex'].values[0]:.2f} | TempDiff: {raw_input['TempDiff'].values[0]:.2f}K")
+        st.info(f"Calculated PowerIndex: {raw_input['Power_Index'].values[0]:.2f} | TempDiff: {raw_input['Temp_difference'].values[0]:.2f}K")
 
         st.write("### Failure Type Probability")
         prob_df = pd.DataFrame({
