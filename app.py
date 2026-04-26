@@ -8,7 +8,7 @@ from supabase import create_client
 # connect to the bridge
 url = "https://qxlfygymdhxkhcgwbxhn.supabase.co"
 key = "sb_publishable_zqgKoh-Z-oKoaZLxgikFjA_BW3zuaxu"
-supabase = create_client(url,key)
+supabase = create_client(url, key)
 
 # Robust model loading for deployment
 @st.cache_resource
@@ -40,6 +40,7 @@ torque = st.sidebar.number_input("Torque [Nm]", value=40.0, step=0.5)
 tool_wear = st.sidebar.number_input("Tool wear [min]", value=0, step=1)
 
 if st.sidebar.button("Run Diagnostics"):
+    # Create initial DataFrame
     raw_input = pd.DataFrame([{
         'Type': m_type,
         'Air temperature [K]': air_temp,
@@ -49,52 +50,61 @@ if st.sidebar.button("Run Diagnostics"):
         'Tool wear [min]': tool_wear
     }])
 
-
-    # Feature Engineering (Matches your training logic)
+    # 1. Feature Engineering
     raw_input['PowerIndex'] = raw_input['Torque [Nm]'] * raw_input['Rotational speed [rpm]']
     raw_input['TempDiff'] = raw_input['Process temperature [K]'] - raw_input['Air temperature [K]']
 
-    # Prediction
-    prediction = pipeline.predict(raw_input)[0]
-    probabilities = pipeline.predict_proba(raw_input)[0]
-    confidence = np.max(probabilities) * 100
-    # after prediction
-    data_to_save = {
-        "air_temp" : air_temp,
-        "process_temp" : proc_temp,
-        "rpm" : rpm,
-        "torque" : torque,
-        "prediction" : str(prediction),
-        "confidence" : float(confidence)
-    }
+    # 2. FORCE COLUMN ORDER (Match this exactly to your training data columns)
+    # If your training data had 'Type' at the end or different names, change this list!
+    expected_columns = [
+        'Type', 'Air temperature [K]', 'Process temperature [K]', 
+        'Rotational speed [rpm]', 'Torque [Nm]', 'Tool wear [min]', 
+        'PowerIndex', 'TempDiff'
+    ]
+    
+    # This line ensures order is correct and all columns exist
+    raw_input = raw_input[expected_columns]
+
+    # 3. Prediction
     try:
-      supabase.table("Maintenence_Logs").insert(data_to_save).execute()
-      st.success("Prediction Saved to Database!")
-    except Exception as e:
-      st.error(f"Database Error: {e}")
+        prediction = pipeline.predict(raw_input)[0]
+        probabilities = pipeline.predict_proba(raw_input)[0]
+        confidence = np.max(probabilities) * 100
+        
+        # Save to database
+        data_to_save = {
+            "air_temp": float(air_temp),
+            "process_temp": float(proc_temp),
+            "rpm": int(rpm),
+            "torque": float(torque),
+            "prediction": str(prediction),
+            "confidence": float(confidence)
+        }
+        
+        try:
+            supabase.table("Maintenence_Logs").insert(data_to_save).execute()
+            st.toast("✅ Saved to Database!")
+        except Exception as e:
+            st.sidebar.warning(f"DB Sync Failed: {e}")
 
-    st.subheader("Machine Status Analysis")
+        # Display results
+        st.subheader("Machine Status Analysis")
+        if prediction in ["No Failure", 0, "0"]:
+            st.success(f"✅ STATUS: NORMAL (Confidence: {confidence:.2f}%)")
+        else:
+            st.error(f"🚨 STATUS: {prediction} DETECTED (Confidence: {confidence:.2f}%)")
 
-    # Assuming 0 or 'No Failure' is the normal state
-    if prediction in ["No Failure", 0, "0"]:
-        st.success(f"✅ STATUS: NORMAL (Confidence: {confidence:.2f}%)")
-    else:
-        st.error(f"🚨 STATUS: {prediction} DETECTED (Confidence: {confidence:.2f}%)")
+        st.info(f"Calculated PowerIndex: {raw_input['PowerIndex'].values[0]:.2f} | TempDiff: {raw_input['TempDiff'].values[0]:.2f}K")
 
-    st.info(f"Calculated PowerIndex: {raw_input['PowerIndex'].values[0]:.2f} | TempDiff: {raw_input['TempDiff'].values[0]:.2f}K")
+        st.write("### Failure Type Probability")
+        prob_df = pd.DataFrame({
+            'Failure Type': pipeline.classes_,
+            'Probability (%)': probabilities * 100
+        }).sort_values(by='Probability (%)', ascending=False)
+        st.bar_chart(prob_df.set_index('Failure Type'))
 
-    st.write("### Failure Type Probability")
-    prob_df = pd.DataFrame({
-        'Failure Type': pipeline.classes_,
-        'Probability (%)': probabilities * 100
-    }).sort_values(by='Probability (%)', ascending=False)
+    except ValueError as ve:
+        st.error(f"Model Error: The features provided don't match what the model expects. Detail: {ve}")
 
-    st.bar_chart(prob_df.set_index('Failure Type'))
 else:
     st.write("👈 Adjust sensor values in the sidebar and click **Run Diagnostics** to begin.")
-
-
-
-
-
-
