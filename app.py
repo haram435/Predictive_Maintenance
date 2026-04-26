@@ -58,7 +58,7 @@ if st.sidebar.button("Run Diagnostics"):
     expected_columns = [
         'Type', 'Air temperature [K]', 'Process temperature [K]', 
         'Rotational speed [rpm]', 'Torque [Nm]', 'Tool wear [min]', 
-        , 'Temp_difference','Power_Index'
+        'Temp_difference','Power_Index'
     ]
     
     raw_input = raw_input[expected_columns]
