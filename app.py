@@ -80,7 +80,7 @@ if st.sidebar.button("Run Diagnostics"):
         }
         
         try:
-            supabase.table("Maintenence_Logs").insert(data_to_save).execute()
+            supabase.table("Maintenance_Logs").insert(data_to_save).execute()
             st.toast("✅ Saved to Database!")
         except Exception as e:
             st.sidebar.warning(f"DB Sync Failed: {e}")
