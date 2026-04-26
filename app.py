@@ -54,15 +54,13 @@ if st.sidebar.button("Run Diagnostics"):
     raw_input['Power_Index'] = raw_input['Torque [Nm]'] * raw_input['Rotational speed [rpm]']
     raw_input['Temp_difference'] = raw_input['Process temperature [K]'] - raw_input['Air temperature [K]']
 
-    # 2. FORCE COLUMN ORDER (Match this exactly to your training data columns)
-    # If your training data had 'Type' at the end or different names, change this list!
+    
     expected_columns = [
         'Type', 'Air temperature [K]', 'Process temperature [K]', 
         'Rotational speed [rpm]', 'Torque [Nm]', 'Tool wear [min]', 
-        'PowerIndex', 'TempDiff'
+        , 'Temp_difference','Power_Index'
     ]
     
-    # This line ensures order is correct and all columns exist
     raw_input = raw_input[expected_columns]
 
     # 3. Prediction
