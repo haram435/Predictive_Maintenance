@@ -1,4 +1,4 @@
-# 🛠️ Predictive Maintenance — Machine Failure Type Classifier
+# 🛠️ Industrial Machine Health Monitor
 
 A Streamlit-deployed ML app that predicts *what kind* of failure an industrial machine is heading toward — not just whether it will fail — from live sensor readings.
 
